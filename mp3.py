@@ -1,5 +1,8 @@
 import nltk
 from nltk.corpus import stopwords
+import matplotlib.pyplot as plt
+import seaborn
+import numpy as np
 
 stopWords = set(stopwords.words('english'))
 
@@ -25,7 +28,7 @@ for title in real_sentences:
 		real_words.extend(title.split(' '))
 
 
-# Part 1
+## Part 1
 def sortTuple(tup):    
     return(sorted(tup, key = lambda x: x[1], reverse=True))
 
@@ -33,16 +36,85 @@ wordCountFake = []
 for word in set(fake_words):
 	if word not in stopWords:
 		wordCountFake.append((word, fake_words.count(word)))
+		
+		# if word == 'hillary' or word == 'trump' or word == 'clinton' or word == 'donald':
+		# 	print(word, fake_words.count(word))
 
 wordCountReal = []
 for word in set(real_words):
 	if word not in stopWords:
 		wordCountReal.append((word, real_words.count(word)))
 
+		# if word == 'hillary' or word == 'trump' or word == 'clinton' or word == 'donald':
+		# 	print(word, real_words.count(word))
 
-print(sortTuple(wordCountFake)[0:10])
-print(sortTuple(wordCountReal)[0:10])
+fake10 = sortTuple(wordCountFake)[0:10]
+real10 = sortTuple(wordCountReal)[0:10]
 
-# Top ten most seen words (% of text)
-# num of different words
-# num times we see clinton vs trump
+words_fake = [x[0] for x in fake10]
+nums_fake = [x[1] / len(fake_words) for x in fake10]
+
+words_real = [x[0] for x in real10]
+nums_real = [x[1] / len(real_words) for x in real10]
+
+# proportion for top 10 words
+plt.subplot(1, 2, 1)
+plt.bar(words_fake, height = nums_fake)
+plt.ylabel('Word Proportion')
+plt.title('Top 10 Fake Words')
+plt.subplot(1, 2, 2)
+plt.bar(words_real, height = nums_real)
+plt.title('Top 10 Real Words')
+plt.xlabel('')
+# plt.show()
+
+# num of different words total
+numFakeWords = len(set(fake_words))
+numRealWords = len(set(real_words))
+# print(numFakeWords, numRealWords)
+
+## Part 2
+headlines = fake.split('\n')
+fakeLength = len(headlines)
+tag = ['fake'] * len(headlines)
+headlines.extend(real.split('\n'))
+tag.extend(['real'] * (len(headlines) - fakeLength))
+
+headlines = np.array(headlines)
+tag = np.array(tag)
+
+
+trainProp = 0.75
+valProp = 0.15
+
+trainNum = int(len(headlines) * trainProp)
+valNum = int(len(headlines) * valProp)
+
+idx = np.random.RandomState(seed=31).permutation(range(len(headlines)))
+trainIdx = idx[:trainNum]
+testIdx = idx[trainNum:valNum]
+validIdx = idx[valNum:len(headlines)]
+
+
+train_x = headlines[trainIdx]
+train_y = tag[trainIdx]
+
+test_x = headlines[testIdx]
+test_y = tag[testIdx]
+
+valid_x = headlines[validIdx]
+valid_y = tag[validIdx]
+
+def getProbs(m, pHat, dictFake, dictReal):
+
+	return (probfake, probReal)
+
+
+
+m = range(0, 11, 1)
+pHat = np.arange(0, 0.55, 0.05)
+
+for i in m:
+	for j in pHat:
+		print(i, j)
+
