@@ -1,9 +1,9 @@
-
 import nltk
 # from nltk.corpus import stopwords
 import matplotlib.pyplot as plt
 import seaborn
 import numpy as np
+from math import exp, log
 
 # stopWords = set(stopwords.words('english'))
 
@@ -31,7 +31,7 @@ for title in real_sentences:
 
 ## Part 1
 def sortTuple(tup):    
-    return(sorted(tup, key = lambda x: x[1], reverse=True))
+	return(sorted(tup, key = lambda x: x[1], reverse=True))
 
 wordCountFake = []
 for word in set(fake_words):
@@ -89,7 +89,7 @@ trainProp = 0.75
 valProp = 0.15
 
 trainNum = int(len(headlines) * trainProp)
-valNum = int(len(headlines) * valProp)
+valNum = trainNum + int(len(headlines) * valProp)
 
 idx = np.random.RandomState(seed=31).permutation(range(len(headlines)))
 trainIdx = idx[:trainNum]
@@ -106,6 +106,7 @@ test_y = tag[testIdx]
 valid_x = headlines[validIdx]
 valid_y = tag[validIdx]
 
+# dictionary of counts per word (how many headlines it appears it)
 def makeDict(headlines, tags, fake_mark):
 	dictionary = {}
 	for i in range(len(tags)):
@@ -117,40 +118,110 @@ def makeDict(headlines, tags, fake_mark):
 					else:
 						dictionary[word] = 1
 	return dictionary
-# print(makeDict(train_x, train_y, 'fake'))
 
-train_fake_dict = makeDict(train_x, train_y, 'fake')
-train_real_dict = makeDict(train_x, train_y, 'real')
-
-count_c_fake = len(train_y[train_y == 'fake'])
-count_c_real = len(train_y[train_y == 'real'])
-
-
-#new dictionary with probabilites
-def getProbs(m, pHat, headlines, tags, fake_mark):
-	dictionary = makeDict(headlines, tags, fake_mark)
- 	dict_probs = {}
- 	for word in dictionary.keys():
-		dict_probs[word] = (dictionary[word] + m*pHat)/(len(headlines[tags == fake_mark]) + m)
+# dictionary of probabilites per word given fake_mark
+def getProbs(m, pHat, headlines, tags, fake_mark, trainDict):
+	dict_probs = {}
+	for word in trainDict.keys():
+		dict_probs[word] = (trainDict[word] + m*pHat)/(len(headlines[tags == fake_mark]) + m)
 	return dict_probs
-# dict_probs = {}
-# for word in dictionary.keys():
-# 	dict_probs[word] = (dictionary[word] + m*pHat)/(len(train_y[train_y == 'fake']) + m)
-# if word in dictionary.keys():
-# 	count_xc = dictionary[word]
-# else:
-# 	count_xc = 0
-# count_xc = dictFake[word]
-
-	# return (probfake)
 
 
+def getPrediction(words, fakeProbs, realProbs, fakeZero, realZero):
+	logSumFake = 0
 
-m = range(0, 11, 1)
-pHat = np.arange(0, 0.55, 0.05)
+	for word in words:
+		val = 0
+		if word not in fakeProbs:
+			val = fakeZero
+		else:
+			val = fakeProbs[word]
+		logSumFake += log(val)
+	fakeProb = exp(logSumFake) * len(train_y[train_y == 'fake'])
 
+	logSumReal = 0
+	for word in words:
+		val = 0
+		if word not in realProbs:
+			val = realZero
+		else:
+			val = realProbs[word]
+		logSumReal += log(val)
+	realProb = exp(logSumReal) * len(train_y[train_y == 'real'])
+
+	if fakeProb >= realProb:
+		return 'fake'
+	else:
+		return 'real'
+
+
+m = range(1, 11, 1)
+pHat = np.arange(0.05, 0.55, 0.05)
+
+
+trainFake = makeDict(train_x, train_y, 'fake')
+trainReal = makeDict(train_x, train_y, 'real')
+# accuracy = []
+# mpPairs = []
 # for i in m:
 # 	for j in pHat:
-# 		print(i, j)
+# 		mpPairs.append((i,j))
+# 		pred = []
+# 		fakeProbs = getProbs(i, j, train_x, train_y, 'fake', trainFake)
+# 		fakeZero = (i*j)/(len(train_y[train_y == 'fake']) + i)
+# 		realProbs = getProbs(i, j, train_x, train_y, 'real', trainReal)
+# 		realZero = (i*j)/(len(train_y[train_y == 'real']) + i)
 
-#which has highest accuracy rate on validation set
+# 		for headline in valid_x:
+# 			words = headline.split(' ')
+# 			pred.append(getPrediction(words, fakeProbs, realProbs, fakeZero, realZero))
+
+# 		# get accuracy of prediction and add to accuracy list
+# 		same = 0
+# 		for i in range(len(pred)):
+# 			same += int(pred[i] == valid_y[i])
+# 		accuracy.append(same / len(valid_y))
+
+
+# maxAccuracyIndex = accuracy.index(max(accuracy))
+# print(mpPairs[maxAccuracyIndex])
+
+# m = 1
+# pHat = 0.05
+
+
+# given real, top 10 words
+probReal = getProbs(1, 0.05, train_x, train_y, 'real', trainReal)
+realStrong10 = sorted(probReal, key=probReal.get, reverse=True)[:10]
+probFake = getProbs(1, 0.05, train_x, train_y, 'fake', trainFake)
+fakeStrong10 = sorted(probFake, key=probFake.get, reverse=True)[:10]
+
+# Part 1, 2, 3
+# Part 4: conditional independence?
+# Part 5
+
+print(realStrong10)
+print(fakeStrong10)
+
+
+
+
+pred = []
+fakeProbs = getProbs(1, 0.05, train_x, train_y, 'fake', trainFake)
+fakeZero = (0.05)/(len(train_y[train_y == 'fake']) + 1)
+realProbs = getProbs(1, 0.05, train_x, train_y, 'real', trainReal)
+realZero = (0.05)/(len(train_y[train_y == 'real']) + 1)
+
+for headline in test_x:
+	words = headline.split(' ')
+	pred.append(getPrediction(words, fakeProbs, realProbs, fakeZero, realZero))
+
+
+# get accuracy of prediction and add to accuracy list
+same = 0
+for i in range(len(pred)):
+	same += int(pred[i] == test_y[i])
+accuracy = same / len(test_y)
+
+print(len(test_y))
+print(accuracy)
