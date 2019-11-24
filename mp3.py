@@ -334,6 +334,7 @@ fakeStrong10A = sorted(absenceFake, key=absenceFake.get, reverse=True)[:10]
 ## Part 4 ##
 # do like P(trump =1, warns = 1 | fake) = P(trump = 1 | fake) * P(warns = 1 | fake)
 # not sure how many we need to 'prove it'
+# we want to show that its not conditionally independence
 # print(headlines[0], tag[0])
 
 ## Part 5 ##
