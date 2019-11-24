@@ -9,6 +9,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from torch.autograd import Variable
 import torch
 
+## Part 1 ##
 def Part1():
 	# stopWords = set(stopwords.words('english'))
 
@@ -81,7 +82,7 @@ def Part1():
 
 #########################################################################################################################
 
-## Part 2
+## Part 2 ##
 fake = open('clean_fake.txt', encoding='utf-8').read()
 real = open('clean_real.txt', encoding='utf-8').read()
 
@@ -228,10 +229,12 @@ pHat = np.arange(0.01, 0.5, 0.02) # want to avoid pHat = 0
 mOpt = 19
 pHatOpt = 0.01
 
+
+# Performance on train and test
 #print(getAccuracy([mOpt], [pHatOpt], fakeCounts, countFake, realCounts, countReal, probFake, train_x, train_y))
 #print(getAccuracy([mOpt], [pHatOpt], fakeCounts, countFake, realCounts, countReal, probFake, test_x, test_y))
-# Report the performance on the training and the test sets using the parameters  from vlaidation 
 
+## Part 3 ##
 # given real, top 10 words
 # P('real' | X_word = 1)
 # words that maximize P(X_word = 1 | real) * P(real) / P(X_word = 1 | fake) * P(fake) 
@@ -326,19 +329,15 @@ fakeStrong10A = sorted(absenceFake, key=absenceFake.get, reverse=True)[:10]
 # for word in fakeStrong10A:
 # 	print(word, absenceFake[word])
 
-# Part 5:
-# lengthFake = 0
-# lengthReal = 0
-# for i in range(len(train_x)):
-# 	if train_y[i] == 'real':
-# 		lengthReal += len(train_x[i].split(' '))
-# 	else:
-# 		lengthFake += len(train_x[i].split(' '))
 
-# avgFake = int(lengthFake / countFake) # 12
-# avgReal = int(lengthReal / countReal) # 8
-# print(avgReal, avgFake)
 
+## Part 4 ##
+# do like P(trump =1, warns = 1 | fake) = P(trump = 1 | fake) * P(warns = 1 | fake)
+# not sure how many we need to 'prove it'
+# print(headlines[0], tag[0])
+
+## Part 5 ##
+# for reference, avgFake = 12 words, avgReal = 8 words
 def probLists (m, pHat, countDict, count):
 	wordList = []
 	probList = []
@@ -366,6 +365,8 @@ def genHeadline(lists):
 
 # print(genHeadline(fakeProbLists))
 # print(genHeadline(realProbLists))
+
+#########################################################################################################################
 
 # Part 6
 # at least 10...
@@ -445,28 +446,32 @@ plt.legend(loc='upper left')
 plt.title("Learning curve for training and validation sets")
 plt.xlabel("Number of iterations (N)")
 plt.ylabel("Cross entropy loss")
-# plt.show()
+plt.show()
 # something's wrong... ^
 
-# y_testpred = model_logreg(x_test).data.numpy()
+y_testpred = model_logreg(x_test).data.numpy()
 
 # results on test set
-# print('accuracy on testing set: ', np.mean(np.argmax(y_testpred, 1) == test_yLR))
+print('accuracy on testing set: ', np.mean(np.argmax(y_testpred, 1) == test_yLR))
 
-# weights (wn) from word_i to 'fake' (z0)
-weight_w = model_logreg[0].weight[0,:]
+# weights (fn) from word_i to 'fake' (z0)
+weight_f = model_logreg[0].weight[0,:]
 
-# weights (vn) from word_i to 'real' (z1)
-weight_v = model_logreg[0].weight[1,:]
+# weights (rn) from word_i to 'real' (z1)
+weight_r = model_logreg[0].weight[1,:]
 
 # Part 8
-# changeDict = {}
 
-# for i in len(wordSet):
-# 	changeDict[wordSet[i]] = exp(weight_w[i]) / exp(weight_w[i])+ exp(weight_v[i])
+# this is for presence predicting real
+changeDict = {}
 
-# top10 = sorted(changeDict, key=changeDict.get, reverse=True)
-# print(top10)
+for i in range(len(wordSet)):
+	changeDict[wordSet[i]] = exp(weight_r[i]) / (exp(weight_r[i]) + exp(weight_f[i]))
+
+realP = sorted(changeDict, key=changeDict.get, reverse=True)[:10]
+
+for word in realP:
+	print(word, changeDict[word])
 
 
 # find top 10 changes
@@ -477,18 +482,18 @@ weight_v = model_logreg[0].weight[1,:]
 # z1 = 0
 
 # word0 = exp(z0) / (exp(z0) + exp(z1))
-# word1 = exp(z0 + w1) / (exp(z0 + w1) + exp(z1 + v1))
+# word1 = exp(z0 + weight_f) / (exp(z0 + weight_f) + exp(z1 + weight_r))
 # top 10 of word1 / word0
 
 
-# top 10 presence predict real
-# for each word exp(w1) / exp(w1)+ exp(v1)
+# top 10 presence predict real (realP)
+# for each word exp(weight_r) / exp(weight_r)+ exp(weight_f)
 
-# top 10 absence predict real
-# for each word exp(-w1) / exp(-w1) + exp(-v1)
+# top 10 absence predict real (realA)
+# for each word exp(-weight_r) / exp(-weight_r) + exp(-weight_f)
 
-# top 10 presence predict fake
-# for each word exp(v1) / exp(w1) + exp(v1)
+# top 10 presence predict fake (fakeP)
+# for each word exp(weight_f) / exp(weight_r) + exp(weight_f)
 
-# top 10 absence predict fake
-# for each word exp(-v1) / exp(-w1) + exp(-v1)
+# top 10 absence predict fake (fakeA)
+# for each word exp(-weight_f) / exp(-weight_r) + exp(-weight_f)
