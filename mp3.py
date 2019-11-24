@@ -224,7 +224,7 @@ pHat = np.arange(0.01, 0.5, 0.02) # want to avoid pHat = 0
 # print(getPred(words, 7, 0.01, fakeCounts, countFake, realCounts, countReal, probFake))
 
 ## run to do all the m pHat combinations
-# print(getAccuracy(m, pHat, fakeCounts, countFake, realCounts, countReal, probFake, valid_x, valid_y))
+print(getAccuracy(m, pHat, fakeCounts, countFake, realCounts, countReal, probFake, valid_x, valid_y))
 
 mOpt = 19
 pHatOpt = 0.01
@@ -374,126 +374,127 @@ def genHeadline(lists):
 #########################################################################################################################
 
 # Part 7
-dtype_float = torch.FloatTensor
-dtype_long = torch.LongTensor
+def Part78():
+	dtype_float = torch.FloatTensor
+	dtype_long = torch.LongTensor
 
-# print(len(headlines))
-vectorizer = CountVectorizer()
-words = vectorizer.fit_transform(headlines).toarray()
-wordSet = vectorizer.get_feature_names()
-# print(words)
+	# print(len(headlines))
+	vectorizer = CountVectorizer()
+	words = vectorizer.fit_transform(headlines).toarray()
+	wordSet = vectorizer.get_feature_names()
+	# print(words)
 
-# 0 == fake, 1 == real
-tags = []
-for label in tag:
-	tags.append(int(label == 'real'))
-tags = np.array(tags)
-# tags = vectorizer.fit_transform(tag).toarray()
-# print(tags)
+	# 0 == fake, 1 == real
+	tags = []
+	for label in tag:
+		tags.append(int(label == 'real'))
+	tags = np.array(tags)
+	# tags = vectorizer.fit_transform(tag).toarray()
+	# print(tags)
 
-train_xLR = words[trainIdx]
-train_yLR = tags[trainIdx]
+	train_xLR = words[trainIdx]
+	train_yLR = tags[trainIdx]
 
-test_xLR = words[testIdx]
-test_yLR = tags[testIdx]
+	test_xLR = words[testIdx]
+	test_yLR = tags[testIdx]
 
-valid_xLR = words[validIdx]
-valid_yLR = tags[validIdx]
+	valid_xLR = words[validIdx]
+	valid_yLR = tags[validIdx]
 
-# print(train_xLR)
-# print(train_yLR)
+	# print(train_xLR)
+	# print(train_yLR)
 
-x_train = Variable(torch.from_numpy(train_xLR), requires_grad=False).type(dtype_float)
-y_classes = Variable(torch.from_numpy(train_yLR), requires_grad=False).type(dtype_long)
+	x_train = Variable(torch.from_numpy(train_xLR), requires_grad=False).type(dtype_float)
+	y_classes = Variable(torch.from_numpy(train_yLR), requires_grad=False).type(dtype_long)
 
-x_valid = Variable(torch.from_numpy(valid_xLR), requires_grad=False).type(dtype_float)
-y_validclasses = Variable(torch.from_numpy(valid_yLR), requires_grad=False).type(dtype_long)
-
-
-x_test = Variable(torch.from_numpy(test_xLR), requires_grad=False).type(dtype_float)
-
-dim_x = words.shape[1]
-dim_out = 2
-
-model_logreg = torch.nn.Sequential(
-	torch.nn.Linear(dim_x, dim_out)
-)
-
-loss_train = []
-loss_valid = [] 
-
-learning_rate = 1e-3
-N = 10000 
-loss_fn = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model_logreg.parameters(), lr=learning_rate)
-
-for t in range(N):
-    y_pred = model_logreg(x_train)
-    loss = loss_fn(y_pred, y_classes)
-    loss_train.append(loss.data.numpy().reshape((1,))[0]/len(y_classes))
-
-    y_validpred = model_logreg(x_valid)
-    loss_v = loss_fn(y_validpred, y_validclasses)
-    loss_valid.append(loss_v.data.numpy().reshape((1,))[0]/len(y_validclasses))
-
-    model_logreg.zero_grad() 
-    loss.backward()   
-    optimizer.step()   
-
-plt.plot(range(N), loss_valid, color='b', label='validation')
-plt.plot(range(N), loss_train, color='r', label='training')
-plt.legend(loc='upper left')
-plt.title("Learning curve for training and validation sets")
-plt.xlabel("Number of iterations (N)")
-plt.ylabel("Cross entropy loss")
-plt.show()
-# something's wrong... ^
-
-y_testpred = model_logreg(x_test).data.numpy()
-
-# results on test set
-print('accuracy on testing set: ', np.mean(np.argmax(y_testpred, 1) == test_yLR))
-
-# weights (fn) from word_i to 'fake' (z0)
-weight_f = model_logreg[0].weight[0,:]
-
-# weights (rn) from word_i to 'real' (z1)
-weight_r = model_logreg[0].weight[1,:]
-
-# Part 8
-
-# this is for presence predicting real
-changeDict = {}
-
-for i in range(len(wordSet)):
-	changeDict[wordSet[i]] = exp(weight_r[i]) / (exp(weight_r[i]) + exp(weight_f[i]))
-
-realP = sorted(changeDict, key=changeDict.get, reverse=True)[:10]
-
-for word in realP:
-	print(word, changeDict[word])
+	x_valid = Variable(torch.from_numpy(valid_xLR), requires_grad=False).type(dtype_float)
+	y_validclasses = Variable(torch.from_numpy(valid_yLR), requires_grad=False).type(dtype_long)
 
 
-# find top 10 changes
-# the other cases are basically the same code
+	x_test = Variable(torch.from_numpy(test_xLR), requires_grad=False).type(dtype_float)
 
-# word weight from 0 -> 1 or 1 -> 0
-# z0 = 0
-# z1 = 0
+	dim_x = words.shape[1]
+	dim_out = 2
 
-# word0 = exp(z0) / (exp(z0) + exp(z1))
-# word1 = exp(z0 + weight_f) / (exp(z0 + weight_f) + exp(z1 + weight_r))
-# top 10 of word1 / word0
+	model_logreg = torch.nn.Sequential(
+		torch.nn.Linear(dim_x, dim_out)
+	)
+
+	loss_train = []
+	loss_valid = [] 
+
+	learning_rate = 1e-3
+	N = 10000 
+	loss_fn = torch.nn.CrossEntropyLoss()
+	optimizer = torch.optim.Adam(model_logreg.parameters(), lr=learning_rate)
+
+	for t in range(N):
+	    y_pred = model_logreg(x_train)
+	    loss = loss_fn(y_pred, y_classes)
+	    loss_train.append(loss.data.numpy().reshape((1,))[0]/len(y_classes))
+
+	    y_validpred = model_logreg(x_valid)
+	    loss_v = loss_fn(y_validpred, y_validclasses)
+	    loss_valid.append(loss_v.data.numpy().reshape((1,))[0]/len(y_validclasses))
+
+	    model_logreg.zero_grad() 
+	    loss.backward()   
+	    optimizer.step()   
+
+	plt.plot(range(N), loss_valid, color='b', label='validation')
+	plt.plot(range(N), loss_train, color='r', label='training')
+	plt.legend(loc='upper left')
+	plt.title("Learning curve for training and validation sets")
+	plt.xlabel("Number of iterations (N)")
+	plt.ylabel("Cross entropy loss")
+	plt.show()
+	# something's wrong... ^
+
+	y_testpred = model_logreg(x_test).data.numpy()
+
+	# results on test set
+	print('accuracy on testing set: ', np.mean(np.argmax(y_testpred, 1) == test_yLR))
+
+	# weights (fn) from word_i to 'fake' (z0)
+	weight_f = model_logreg[0].weight[0,:]
+
+	# weights (rn) from word_i to 'real' (z1)
+	weight_r = model_logreg[0].weight[1,:]
+
+	# Part 8
+
+	# this is for presence predicting real
+	changeDict = {}
+
+	for i in range(len(wordSet)):
+		changeDict[wordSet[i]] = exp(weight_r[i]) / (exp(weight_r[i]) + exp(weight_f[i]))
+
+	realP = sorted(changeDict, key=changeDict.get, reverse=True)[:10]
+
+	for word in realP:
+		print(word, changeDict[word])
 
 
-# top 10 presence predict real (realP)
-# for each word exp(weight_r) / exp(weight_r)+ exp(weight_f)
+	# find top 10 changes
+	# the other cases are basically the same code
 
-# top 10 absence predict real (realA)
-# for each word exp(-weight_r) / exp(-weight_r) + exp(-weight_f)
+	# word weight from 0 -> 1 or 1 -> 0
+	# z0 = 0
+	# z1 = 0
 
-# top 10 presence predict fake (fakeP)
-# for each word exp(weight_f) / exp(weight_r) + exp(weight_f)
+	# word0 = exp(z0) / (exp(z0) + exp(z1))
+	# word1 = exp(z0 + weight_f) / (exp(z0 + weight_f) + exp(z1 + weight_r))
+	# top 10 of word1 / word0
 
-# top 10 absence predict fake (fakeA)
-# for each word exp(-weight_f) / exp(-weight_r) + exp(-weight_f)
+
+	# top 10 presence predict real (realP)
+	# for each word exp(weight_r) / exp(weight_r)+ exp(weight_f)
+
+	# top 10 absence predict real (realA)
+	# for each word exp(-weight_r) / exp(-weight_r) + exp(-weight_f)
+
+	# top 10 presence predict fake (fakeP)
+	# for each word exp(weight_f) / exp(weight_r) + exp(weight_f)
+
+	# top 10 absence predict fake (fakeA)
+	# for each word exp(-weight_f) / exp(-weight_r) + exp(-weight_f)
