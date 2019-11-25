@@ -3,7 +3,7 @@ from nltk.corpus import stopwords
 import matplotlib.pyplot as plt
 import seaborn
 import numpy as np
-from math import exp, log
+from math import exp, log, sqrt
 from random import random
 from sklearn.feature_extraction.text import CountVectorizer
 from torch.autograd import Variable
@@ -377,35 +377,48 @@ realProbLists = probLists(mOpt, pHatOpt, realCounts, countReal)
 
 ## Part 4 ##
 
-# # P(trump = 1, warns = 1 | fake) =? P(trump = 1 | fake) * P(warns = 1 | fake)
-# count = 0
-# for i in range(len(headlines)):
-# 	words = headlines[i].split(' ')
-# 	if 'trump' in words and 'offended' in words and tag[i] == 'fake':
-# 		count += 1
-# trumpProb = fakeProbLists[1][fakeProbLists[0].index('trump')]
-# warnsProb = fakeProbLists[1][fakeProbLists[0].index('offended')]
-# # print(trumpProb)
-# # print(warnsProb)
-# print(count)
-# countFakeAll = sum(tag == 'fake')
-# print('joint:', count / countFakeAll)
+# P(trump = 1| fake, warns = 1 ) =? P(trump = 1 | fake)
+# * P(warns = 1 | fake)
+count = 0
+wall_count = 0
+for i in range(len(headlines)):
+	words = headlines[i].split(' ')
+	if 'donald' in words and 'america' in words and tag[i] == 'fake':
+		count += 1
+	if 'america' in words and tag[i] == 'fake':
+		wall_count += 1
+trumpProb = fakeProbLists[1][fakeProbLists[0].index('donald')] #This is the second fraction
+warnsProb = fakeProbLists[1][fakeProbLists[0].index('america')]
+# print(trumpProb)
+# print(warnsProb)
+print(count)
+print(wall_count)
+countFakeAll = sum(tag == 'fake')
+print('P(w1|w2):', count / wall_count)
+print('P(w1):', trumpProb)
+print('sig', (count / wall_count)/sqrt(countFakeAll))
+
 # print('product:', exp(log(trumpProb) + log(warnsProb)))
 
-# # P(trump =1, defends = 1 | real) =? P(trump = 1 | real) * P(defends = 1 | real)
-# count = 0
-# for i in range(len(headlines)):
-# 	words = headlines[i].split(' ')
-# 	if 'trump' in words and 'roasts' in words and tag[i] == 'real':
-# 		count += 1
-# trumpProb = fakeProbLists[1][fakeProbLists[0].index('trump')]
-# defendsProb = fakeProbLists[1][fakeProbLists[0].index('roasts')]
-# # print(trumpProb)
-# # print(defendsProb)
+# P(trump =1, defends = 1 | real) =? P(trump = 1 | real) * P(defends = 1 | real)
+count = 0
+wall_count = 0
+for i in range(len(headlines)):
+	words = headlines[i].split(' ')
+	if 'trump' in words and 'america' in words and tag[i] == 'real':
+		count += 1
+	if 'america' in words and tag[i] == 'real':
+		wall_count += 1
+trumpProb = fakeProbLists[1][fakeProbLists[0].index('trump')]
+defendsProb = fakeProbLists[1][fakeProbLists[0].index('america')]
+
 # print(count)
+# print(wall_count)
 # countRealAll = sum(tag == 'real')
-# print('joint:', count / countRealAll)
+# print('P(w1|w2):', count / wall_count)
+# print('P(w1):', trumpProb)
 # print('product:', exp(log(trumpProb) + log(defendsProb)))
+
 
 
 # def genHeadline(lists):
@@ -427,6 +440,11 @@ realProbLists = probLists(mOpt, pHatOpt, realCounts, countReal)
 
 # Part 6
 # at least 10...
+hdlines = open('headlines.txt', encoding='utf-8').read()
+nonhdlines = open('nonheadlines.txt', encoding='utf-8').read()
+# print(hdlines)
+# print(nonhdlines)
+
 
 #########################################################################################################################
 
@@ -477,7 +495,7 @@ realProbLists = probLists(mOpt, pHatOpt, realCounts, countReal)
 # loss_train = []
 # loss_valid = [] 
 
-# learning_rate = 1e-3
+# learning_rate = 1e-4
 # N = 10000 
 # loss_fn = torch.nn.CrossEntropyLoss()
 # optimizer = torch.optim.Adam(model_logreg.parameters(), lr=learning_rate)
