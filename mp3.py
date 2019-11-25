@@ -23,7 +23,6 @@ def Part1():
 		if title != '':
 			fake_words.extend(title.split(' '))
 
-
 	# read in real data and split into words
 	real = open('clean_real.txt', encoding='utf-8').read()
 
@@ -33,7 +32,6 @@ def Part1():
 	for title in real_sentences:
 		if title != '':
 			real_words.extend(title.split(' '))
-
 
 	## Part 1
 	def sortTuple(tup):    
@@ -128,7 +126,7 @@ for headline in train_x:
 	for word in set(words):
 		if word not in wordSet:
 			wordSet.append(word)
-
+			
 # dictionary of count(X_word = 1, tag = fake_mark)
 # number of real / fake headlines a word appears in 
 def countPerWord(headlines, tags, fake_mark):
@@ -235,6 +233,21 @@ probReal = 1 - probFake
 m = range(1, 20, 1) # want to avoid m = 0 
 pHat = np.arange(0.01, 0.5, 0.02) # want to avoid pHat = 0
 
+
+# list1 = []
+# for word in fakeCounts:
+# 	if fakeCounts[word] == 1:
+# 		list1.append(word)
+# print(len(list1))
+# print(list1)
+
+
+# list2 = []
+# for word in realCounts:
+# 	if realCounts[word] == 1:
+# 		list2.append(word)
+# print(len(list2))
+# print(list2)
 ## just a test on the first two headlines
 # words = valid_x[0].split(' ')
 # print(getPred(words, 7, 0.01, fakeCounts, countFake, realCounts, countReal, probFake))
@@ -349,24 +362,51 @@ def absentGivenWordFake (fakeDict, realDict, m, pHat, realCount, fakeCount, prob
 # for word in fakeStrong10A:
 # 	print(word, absenceFake[word])
 
-## Part 4 ##
-# do like P(trump =1, warns = 1 | fake) = P(trump = 1 | fake) * P(warns = 1 | fake)
-# not sure how many we need to 'prove it'
-# we want to show that its not conditionally independence
-# print(headlines[0], tag[0])
-
 ## Part 5 ##
-# # for reference, avgFake = 12 words, avgReal = 8 words
-# def probLists (m, pHat, countDict, count):
-# 	wordList = []
-# 	probList = []
-# 	for word in countDict:
-# 		wordList.append(word)
-# 		probList.append((countDict[word] + m*pHat) / (count + m))
-# 	return (wordList, probList)
+# for reference, avgFake = 12 words, avgReal = 8 words
+def probLists (m, pHat, countDict, count):
+	wordList = []
+	probList = []
+	for word in countDict:
+		wordList.append(word)
+		probList.append((countDict[word] + m*pHat) / (count + m))
+	return (wordList, probList)
 
-# fakeProbLists = probLists(mOpt, pHatOpt, fakeCounts, countFake)
-# realProbLists = probLists(mOpt, pHatOpt, realCounts, countReal)
+fakeProbLists = probLists(mOpt, pHatOpt, fakeCounts, countFake)
+realProbLists = probLists(mOpt, pHatOpt, realCounts, countReal)
+
+## Part 4 ##
+
+# # P(trump = 1, warns = 1 | fake) =? P(trump = 1 | fake) * P(warns = 1 | fake)
+# count = 0
+# for i in range(len(headlines)):
+# 	words = headlines[i].split(' ')
+# 	if 'trump' in words and 'offended' in words and tag[i] == 'fake':
+# 		count += 1
+# trumpProb = fakeProbLists[1][fakeProbLists[0].index('trump')]
+# warnsProb = fakeProbLists[1][fakeProbLists[0].index('offended')]
+# # print(trumpProb)
+# # print(warnsProb)
+# print(count)
+# countFakeAll = sum(tag == 'fake')
+# print('joint:', count / countFakeAll)
+# print('product:', exp(log(trumpProb) + log(warnsProb)))
+
+# # P(trump =1, defends = 1 | real) =? P(trump = 1 | real) * P(defends = 1 | real)
+# count = 0
+# for i in range(len(headlines)):
+# 	words = headlines[i].split(' ')
+# 	if 'trump' in words and 'roasts' in words and tag[i] == 'real':
+# 		count += 1
+# trumpProb = fakeProbLists[1][fakeProbLists[0].index('trump')]
+# defendsProb = fakeProbLists[1][fakeProbLists[0].index('roasts')]
+# # print(trumpProb)
+# # print(defendsProb)
+# print(count)
+# countRealAll = sum(tag == 'real')
+# print('joint:', count / countRealAll)
+# print('product:', exp(log(trumpProb) + log(defendsProb)))
+
 
 # def genHeadline(lists):
 # 	headline = ''
