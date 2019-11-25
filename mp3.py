@@ -78,10 +78,16 @@ def Part1():
 	# num of different words total
 	numFakeWords = len(set(fake_words))
 	numRealWords = len(set(real_words))
+
+	allWords = list(set(fake_words)).copy()
+	for word in real_words:
+		if word not in allWords:
+			allWords.append(word)
+
+#	print(len(allWords))
 	# print(numFakeWords, numRealWords)
 
 #########################################################################################################################
-
 ## Part 2 ##
 fake = open('clean_fake.txt', encoding='utf-8').read()
 real = open('clean_real.txt', encoding='utf-8').read()
@@ -115,18 +121,31 @@ test_y = tag[testIdx]
 valid_x = headlines[validIdx]
 valid_y = tag[validIdx]
 
+# our vocabulary from training set 
+wordSet = []
+for headline in train_x:
+	words = headline.split(' ')
+	for word in set(words):
+		if word not in wordSet:
+			wordSet.append(word)
+
 # dictionary of count(X_word = 1, tag = fake_mark)
 # number of real / fake headlines a word appears in 
 def countPerWord(headlines, tags, fake_mark):
 	countDict = {}
+	wordList = wordSet.copy()
 	for i in range(len(headlines)):
 		if tags[i] == fake_mark:
 				words = headlines[i].split(' ')
 				for word in set(words):
+					if word in wordList:
+						wordList.remove(word)
 					if word in countDict:
 						countDict[word] += 1
 					else:
 						countDict[word] = 1
+	for word in wordList:
+		countDict[word] = 0
 	return countDict
 
 # predict headline as real or fake
@@ -134,7 +153,7 @@ def getPred(words, m, pHat, fakeDict, fakeCount, realDict, realCount, probFake):
 	logSumFake = 0
 	uniqueFake = set(words)
 
-	# for each of the 1 - N words, calculate probability
+	# for each word in vocab, calculate probability
 	for word in fakeDict:
 		val = 1 - ((fakeDict[word] + m*pHat) / (fakeCount + m))
 		# if X_word = 1
@@ -153,7 +172,7 @@ def getPred(words, m, pHat, fakeDict, fakeCount, realDict, realCount, probFake):
 	logSumReal = 0
 	uniqueReal = set(words)
 
-	# for each of the 1 - N words, calculate probability
+	# for each word in vocab, calculate probability
 	for word in realDict:
 		val = 1 - ((realDict[word] + m*pHat) / (realCount + m))
 		if word in words:
@@ -223,16 +242,17 @@ pHat = np.arange(0.01, 0.5, 0.02) # want to avoid pHat = 0
 # words = valid_x[1].split(' ')
 # print(getPred(words, 7, 0.01, fakeCounts, countFake, realCounts, countReal, probFake))
 
-## run to do all the m pHat combinations
-print(getAccuracy(m, pHat, fakeCounts, countFake, realCounts, countReal, probFake, valid_x, valid_y))
+# run to do all the m pHat combinations
+# accurate = getAccuracy(m, pHat, fakeCounts, countFake, realCounts, countReal, probFake, valid_x, valid_y)
+# print(accurate)
 
-mOpt = 19
-pHatOpt = 0.01
-
+mOpt = 18 # accurate[1][0]
+pHatOpt = 0.01 # accurate[1][1]
 
 # Performance on train and test
-#print(getAccuracy([mOpt], [pHatOpt], fakeCounts, countFake, realCounts, countReal, probFake, train_x, train_y))
-#print(getAccuracy([mOpt], [pHatOpt], fakeCounts, countFake, realCounts, countReal, probFake, test_x, test_y))
+# print('valid', getAccuracy([mOpt], [pHatOpt], fakeCounts, countFake, realCounts, countReal, probFake, valid_x, valid_y))
+# print('train', getAccuracy([mOpt], [pHatOpt], fakeCounts, countFake, realCounts, countReal, probFake, train_x, train_y))
+# print('test', getAccuracy([mOpt], [pHatOpt], fakeCounts, countFake, realCounts, countReal, probFake, test_x, test_y))
 
 ## Part 3 ##
 # given real, top 10 words
@@ -297,13 +317,13 @@ def absentGivenWordFake (fakeDict, realDict, m, pHat, realCount, fakeCount, prob
 		probs[word] = prob
 	return probs
 
-# presence -> real
-presenceReal = presenceGivenWordReal(fakeCounts, realCounts, mOpt, pHatOpt, countReal, countFake, probReal)
-realStrong10P = sorted(presenceReal, key=presenceReal.get, reverse=True)[:10]
+# # presence -> real
+# presenceReal = presenceGivenWordReal(fakeCounts, realCounts, mOpt, pHatOpt, countReal, countFake, probReal)
+# realStrong10P = sorted(presenceReal, key=presenceReal.get, reverse=True)[:10]
 
-# presence -> fake
-presenceFake = presenceGivenWordFake(fakeCounts, realCounts, mOpt, pHatOpt, countReal, countFake, probFake)
-fakeStrong10P = sorted(presenceFake, key=presenceFake.get, reverse=True)[:10]
+# # presence -> fake
+# presenceFake = presenceGivenWordFake(fakeCounts, realCounts, mOpt, pHatOpt, countReal, countFake, probFake)
+# fakeStrong10P = sorted(presenceFake, key=presenceFake.get, reverse=True)[:10]
 
 # print('presence -> real', realStrong10P)
 # for word in realStrong10P:
@@ -313,13 +333,13 @@ fakeStrong10P = sorted(presenceFake, key=presenceFake.get, reverse=True)[:10]
 # for word in fakeStrong10P:
 # 	print(word, presenceFake[word])
 
-# absence -> real
-absenceReal = absentGivenWordReal(fakeCounts, realCounts, mOpt, pHatOpt, countReal, countFake, probReal)
-realStrong10A = sorted(absenceReal, key=absenceReal.get, reverse=True)[:10]
+# # absence -> real
+# absenceReal = absentGivenWordReal(fakeCounts, realCounts, mOpt, pHatOpt, countReal, countFake, probReal)
+# realStrong10A = sorted(absenceReal, key=absenceReal.get, reverse=True)[:10]
 
-# absence -> fake
-absenceFake = absentGivenWordFake(fakeCounts, realCounts, mOpt, pHatOpt, countReal, countFake, probFake)
-fakeStrong10A = sorted(absenceFake, key=absenceFake.get, reverse=True)[:10]
+# # absence -> fake
+# absenceFake = absentGivenWordFake(fakeCounts, realCounts, mOpt, pHatOpt, countReal, countFake, probFake)
+# fakeStrong10A = sorted(absenceFake, key=absenceFake.get, reverse=True)[:10]
 
 # print('absence -> real', realStrong10A)
 # for word in realStrong10A:
@@ -329,8 +349,6 @@ fakeStrong10A = sorted(absenceFake, key=absenceFake.get, reverse=True)[:10]
 # for word in fakeStrong10A:
 # 	print(word, absenceFake[word])
 
-
-
 ## Part 4 ##
 # do like P(trump =1, warns = 1 | fake) = P(trump = 1 | fake) * P(warns = 1 | fake)
 # not sure how many we need to 'prove it'
@@ -338,34 +356,32 @@ fakeStrong10A = sorted(absenceFake, key=absenceFake.get, reverse=True)[:10]
 # print(headlines[0], tag[0])
 
 ## Part 5 ##
-# for reference, avgFake = 12 words, avgReal = 8 words
-def probLists (m, pHat, countDict, count):
-	wordList = []
-	probList = []
-	for word in countDict:
-		wordList.append(word)
-		probList.append((countDict[word] + m*pHat) / (count + m))
-	return (wordList, probList)
+# # for reference, avgFake = 12 words, avgReal = 8 words
+# def probLists (m, pHat, countDict, count):
+# 	wordList = []
+# 	probList = []
+# 	for word in countDict:
+# 		wordList.append(word)
+# 		probList.append((countDict[word] + m*pHat) / (count + m))
+# 	return (wordList, probList)
 
-fakeProbLists = probLists(mOpt, pHatOpt, fakeCounts, countFake)
-realProbLists = probLists(mOpt, pHatOpt, realCounts, countReal)
+# fakeProbLists = probLists(mOpt, pHatOpt, fakeCounts, countFake)
+# realProbLists = probLists(mOpt, pHatOpt, realCounts, countReal)
 
-# total = 0
-# for prob in fakeProbLists[1]:
-# 	total += prob
-# 	print(prob)
-# print('TOTAL: ',total)
+# def genHeadline(lists):
+# 	headline = ''
+# 	for i in range(len(lists[0])):
+# 		if random() < lists[1][i]:
+# 			headline += (' ' + lists[0][i])
+# 	return headline[1:]
 
-def genHeadline(lists):
-	headline = ''
-	for i in range(len(lists[0])):
-		if random() < lists[1][i]:
-			headline += (' ' + lists[0][i])
-#		word = np.random.choice(lists[0], p=lists[1]/sum(lists[1]))
-	return headline[1:]
+# print('fake headlines:')
+# for i in range(10):
+# 	print(genHeadline(fakeProbLists))
 
-# print(genHeadline(fakeProbLists))
-# print(genHeadline(realProbLists))
+# print('real headlines:')
+# for i in range(10):
+# 	print(genHeadline(realProbLists))
 
 #########################################################################################################################
 
@@ -375,106 +391,139 @@ def genHeadline(lists):
 #########################################################################################################################
 
 # Part 7
-def Part78():
-	dtype_float = torch.FloatTensor
-	dtype_long = torch.LongTensor
+dtype_float = torch.FloatTensor
+dtype_long = torch.LongTensor
 
-	# print(len(headlines))
-	vectorizer = CountVectorizer()
-	words = vectorizer.fit_transform(headlines).toarray()
-	wordSet = vectorizer.get_feature_names()
-	# print(words)
+vectorizer = CountVectorizer(analyzer='word', token_pattern = r'(?u)\b\w+\b')
+words = vectorizer.fit_transform(headlines).toarray()
+# print(words.shape)
+# print(words)
 
-	# 0 == fake, 1 == real
-	tags = []
-	for label in tag:
-		tags.append(int(label == 'real'))
-	tags = np.array(tags)
-	# tags = vectorizer.fit_transform(tag).toarray()
-	# print(tags)
+# 0 == fake, 1 == real
+tags = []
+for label in tag:
+	tags.append(int(label == 'real'))
+tags = np.array(tags)
+# print(tags)
 
-	train_xLR = words[trainIdx]
-	train_yLR = tags[trainIdx]
+train_xLR = words[trainIdx]
+train_yLR = tags[trainIdx]
 
-	test_xLR = words[testIdx]
-	test_yLR = tags[testIdx]
+test_xLR = words[testIdx]
+test_yLR = tags[testIdx]
 
-	valid_xLR = words[validIdx]
-	valid_yLR = tags[validIdx]
+valid_xLR = words[validIdx]
+valid_yLR = tags[validIdx]
 
-	# print(train_xLR)
-	# print(train_yLR)
+# print(train_xLR)
+# print(train_yLR)
 
-	x_train = Variable(torch.from_numpy(train_xLR), requires_grad=False).type(dtype_float)
-	y_classes = Variable(torch.from_numpy(train_yLR), requires_grad=False).type(dtype_long)
+x_train = Variable(torch.from_numpy(train_xLR), requires_grad=False).type(dtype_float)
+y_classes = Variable(torch.from_numpy(train_yLR), requires_grad=False).type(dtype_long)
 
-	x_valid = Variable(torch.from_numpy(valid_xLR), requires_grad=False).type(dtype_float)
-	y_validclasses = Variable(torch.from_numpy(valid_yLR), requires_grad=False).type(dtype_long)
+x_valid = Variable(torch.from_numpy(valid_xLR), requires_grad=False).type(dtype_float)
+y_validclasses = Variable(torch.from_numpy(valid_yLR), requires_grad=False).type(dtype_long)
 
 
-	x_test = Variable(torch.from_numpy(test_xLR), requires_grad=False).type(dtype_float)
+x_test = Variable(torch.from_numpy(test_xLR), requires_grad=False).type(dtype_float)
 
-	dim_x = words.shape[1]
-	dim_out = 2
+dim_x = words.shape[1]
+dim_out = 2
 
-	model_logreg = torch.nn.Sequential(
-		torch.nn.Linear(dim_x, dim_out)
-	)
+model_logreg = torch.nn.Sequential(
+	torch.nn.Linear(dim_x, dim_out)
+)
 
-	loss_train = []
-	loss_valid = [] 
+loss_train = []
+loss_valid = [] 
 
-	learning_rate = 1e-3
-	N = 10000 
-	loss_fn = torch.nn.CrossEntropyLoss()
-	optimizer = torch.optim.Adam(model_logreg.parameters(), lr=learning_rate)
+learning_rate = 1e-3
+N = 10000 
+loss_fn = torch.nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model_logreg.parameters(), lr=learning_rate)
 
-	for t in range(N):
-	    y_pred = model_logreg(x_train)
-	    loss = loss_fn(y_pred, y_classes)
-	    loss_train.append(loss.data.numpy().reshape((1,))[0]/len(y_classes))
+for t in range(N):
+    y_pred = model_logreg(x_train)
+    loss = loss_fn(y_pred, y_classes)
+    loss_train.append(loss.data.numpy().reshape((1,))[0]/len(y_classes))
 
-	    y_validpred = model_logreg(x_valid)
-	    loss_v = loss_fn(y_validpred, y_validclasses)
-	    loss_valid.append(loss_v.data.numpy().reshape((1,))[0]/len(y_validclasses))
+    y_validpred = model_logreg(x_valid)
+    loss_v = loss_fn(y_validpred, y_validclasses)
+    loss_valid.append(loss_v.data.numpy().reshape((1,))[0]/len(y_validclasses))
 
-	    model_logreg.zero_grad() 
-	    loss.backward()   
-	    optimizer.step()   
+    model_logreg.zero_grad() 
+    loss.backward()   
+    optimizer.step()   
 
-	plt.plot(range(N), loss_valid, color='b', label='validation')
-	plt.plot(range(N), loss_train, color='r', label='training')
-	plt.legend(loc='upper left')
-	plt.title("Learning curve for training and validation sets")
-	plt.xlabel("Number of iterations (N)")
-	plt.ylabel("Cross entropy loss")
-	plt.show()
-	# something's wrong... ^
+plt.plot(range(N), loss_valid, color='b', label='validation')
+plt.plot(range(N), loss_train, color='r', label='training')
+plt.legend(loc='upper left')
+plt.title("Learning curve for training and validation sets")
+plt.xlabel("Number of iterations (N)")
+plt.ylabel("Cross entropy loss")
+plt.show()
 
-	y_testpred = model_logreg(x_test).data.numpy()
+y_testpred = model_logreg(x_test).data.numpy()
 
-	# results on test set
-	print('accuracy on testing set: ', np.mean(np.argmax(y_testpred, 1) == test_yLR))
+# results on test set
+print('accuracy on testing set: ', np.mean(np.argmax(y_testpred, 1) == test_yLR))
 
-	# weights (fn) from word_i to 'fake' (z0)
-	weight_f = model_logreg[0].weight[0,:]
+# weights (fn) from word_i to 'fake' (z0)
+weight_f = model_logreg[0].weight[0,:]
 
-	# weights (rn) from word_i to 'real' (z1)
-	weight_r = model_logreg[0].weight[1,:]
+# weights (rn) from word_i to 'real' (z1)
+weight_r = model_logreg[0].weight[1,:]
 
-	# Part 8
+# Part 8
 
-	# this is for presence predicting real
-	changeDict = {}
+# top 10 presence predict real (realP)
+# for each word exp(weight_r) / exp(weight_r)+ exp(weight_f)
+changeDict = {}
 
-	for i in range(len(wordSet)):
-		changeDict[wordSet[i]] = exp(weight_r[i]) / (exp(weight_r[i]) + exp(weight_f[i]))
+for i in range(len(wordSet)):
+	changeDict[wordSet[i]] = exp(weight_r[i]) / (exp(weight_r[i]) + exp(weight_f[i]))
 
-	realP = sorted(changeDict, key=changeDict.get, reverse=True)[:10]
+realP = sorted(changeDict, key=changeDict.get, reverse=True)[:10]
 
-	for word in realP:
-		print(word, changeDict[word])
+for word in realP:
+	print('realP', word, changeDict[word])
 
+# top 10 absence predict real (realA)
+# for each word exp(-weight_r) / exp(-weight_r) + exp(-weight_f)
+changeDict1 = {}
+
+for i in range(len(wordSet)):
+	changeDict1[wordSet[i]] = exp(-weight_r[i]) / (exp(-weight_r[i]) + exp(-weight_f[i]))
+
+realA = sorted(changeDict1, key=changeDict1.get, reverse=True)[:10]
+
+for word in realA:
+	print('realA', word, changeDict1[word])
+
+
+# # top 10 presence predict fake (fakeP)
+# # for each word exp(weight_f) / exp(weight_r) + exp(weight_f)
+# changeDict2 = {}
+
+# for i in range(len(wordSet)):
+# 	changeDict2[wordSet[i]] = exp(weight_f[i]) / (exp(weight_r[i]) + exp(weight_f[i]))
+
+# fakeP = sorted(changeDict2, key=changeDict2.get, reverse=True)[:10]
+
+# for word in fakeP:
+# 	print('fakeP', word, changeDict2[word])
+
+# # top 10 absence predict fake (fakeA)
+# # for each word exp(-weight_f) / exp(-weight_r) + exp(-weight_f)
+# changeDict3 = {}
+
+# for i in range(len(wordSet)):
+# 	changeDict3[wordSet[i]] = exp(-weight_f[i]) / (exp(-weight_r[i]) + exp(-weight_f[i]))
+
+# fakeA = sorted(changeDict3, key=changeDict3.get, reverse=True)[:10]
+
+# for word in fakeA:
+# 	print('fakeA', word, changeDict3[word])
 
 	# find top 10 changes
 	# the other cases are basically the same code
@@ -486,7 +535,6 @@ def Part78():
 	# word0 = exp(z0) / (exp(z0) + exp(z1))
 	# word1 = exp(z0 + weight_f) / (exp(z0 + weight_f) + exp(z1 + weight_r))
 	# top 10 of word1 / word0
-
 
 	# top 10 presence predict real (realP)
 	# for each word exp(weight_r) / exp(weight_r)+ exp(weight_f)
