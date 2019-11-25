@@ -1,5 +1,5 @@
 import nltk
-# from nltk.corpus import stopwords
+from nltk.corpus import stopwords
 import matplotlib.pyplot as plt
 import seaborn
 import numpy as np
@@ -11,7 +11,7 @@ import torch
 
 ## Part 1 ##
 def Part1():
-	# stopWords = set(stopwords.words('english'))
+	stopWords = set(stopwords.words('english'))
 
 	# read in fake data and split into words
 	fake = open('clean_fake.txt', encoding='utf-8').read()
@@ -391,114 +391,114 @@ def absentGivenWordFake (fakeDict, realDict, m, pHat, realCount, fakeCount, prob
 #########################################################################################################################
 
 # Part 7
-dtype_float = torch.FloatTensor
-dtype_long = torch.LongTensor
+# dtype_float = torch.FloatTensor
+# dtype_long = torch.LongTensor
 
-vectorizer = CountVectorizer(analyzer='word', token_pattern = r'(?u)\b\w+\b')
-words = vectorizer.fit_transform(headlines).toarray()
-# print(words.shape)
-# print(words)
+# vectorizer = CountVectorizer(analyzer='word', token_pattern = r'(?u)\b\w+\b')
+# words = vectorizer.fit_transform(headlines).toarray()
+# # print(words.shape)
+# # print(words)
 
-# 0 == fake, 1 == real
-tags = []
-for label in tag:
-	tags.append(int(label == 'real'))
-tags = np.array(tags)
-# print(tags)
+# # 0 == fake, 1 == real
+# tags = []
+# for label in tag:
+# 	tags.append(int(label == 'real'))
+# tags = np.array(tags)
+# # print(tags)
 
-train_xLR = words[trainIdx]
-train_yLR = tags[trainIdx]
+# train_xLR = words[trainIdx]
+# train_yLR = tags[trainIdx]
 
-test_xLR = words[testIdx]
-test_yLR = tags[testIdx]
+# test_xLR = words[testIdx]
+# test_yLR = tags[testIdx]
 
-valid_xLR = words[validIdx]
-valid_yLR = tags[validIdx]
+# valid_xLR = words[validIdx]
+# valid_yLR = tags[validIdx]
 
-# print(train_xLR)
-# print(train_yLR)
+# # print(train_xLR)
+# # print(train_yLR)
 
-x_train = Variable(torch.from_numpy(train_xLR), requires_grad=False).type(dtype_float)
-y_classes = Variable(torch.from_numpy(train_yLR), requires_grad=False).type(dtype_long)
+# x_train = Variable(torch.from_numpy(train_xLR), requires_grad=False).type(dtype_float)
+# y_classes = Variable(torch.from_numpy(train_yLR), requires_grad=False).type(dtype_long)
 
-x_valid = Variable(torch.from_numpy(valid_xLR), requires_grad=False).type(dtype_float)
-y_validclasses = Variable(torch.from_numpy(valid_yLR), requires_grad=False).type(dtype_long)
+# x_valid = Variable(torch.from_numpy(valid_xLR), requires_grad=False).type(dtype_float)
+# y_validclasses = Variable(torch.from_numpy(valid_yLR), requires_grad=False).type(dtype_long)
 
 
-x_test = Variable(torch.from_numpy(test_xLR), requires_grad=False).type(dtype_float)
+# x_test = Variable(torch.from_numpy(test_xLR), requires_grad=False).type(dtype_float)
 
-dim_x = words.shape[1]
-dim_out = 2
+# dim_x = words.shape[1]
+# dim_out = 2
 
-model_logreg = torch.nn.Sequential(
-	torch.nn.Linear(dim_x, dim_out)
-)
+# model_logreg = torch.nn.Sequential(
+# 	torch.nn.Linear(dim_x, dim_out)
+# )
 
-loss_train = []
-loss_valid = [] 
+# loss_train = []
+# loss_valid = [] 
 
-learning_rate = 1e-3
-N = 10000 
-loss_fn = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model_logreg.parameters(), lr=learning_rate)
+# learning_rate = 1e-3
+# N = 10000 
+# loss_fn = torch.nn.CrossEntropyLoss()
+# optimizer = torch.optim.Adam(model_logreg.parameters(), lr=learning_rate)
 
-for t in range(N):
-    y_pred = model_logreg(x_train)
-    loss = loss_fn(y_pred, y_classes)
-    loss_train.append(loss.data.numpy().reshape((1,))[0]/len(y_classes))
+# for t in range(N):
+#     y_pred = model_logreg(x_train)
+#     loss = loss_fn(y_pred, y_classes)
+#     loss_train.append(loss.data.numpy().reshape((1,))[0]/len(y_classes))
 
-    y_validpred = model_logreg(x_valid)
-    loss_v = loss_fn(y_validpred, y_validclasses)
-    loss_valid.append(loss_v.data.numpy().reshape((1,))[0]/len(y_validclasses))
+#     y_validpred = model_logreg(x_valid)
+#     loss_v = loss_fn(y_validpred, y_validclasses)
+#     loss_valid.append(loss_v.data.numpy().reshape((1,))[0]/len(y_validclasses))
 
-    model_logreg.zero_grad() 
-    loss.backward()   
-    optimizer.step()   
+#     model_logreg.zero_grad() 
+#     loss.backward()   
+#     optimizer.step()   
 
-plt.plot(range(N), loss_valid, color='b', label='validation')
-plt.plot(range(N), loss_train, color='r', label='training')
-plt.legend(loc='upper left')
-plt.title("Learning curve for training and validation sets")
-plt.xlabel("Number of iterations (N)")
-plt.ylabel("Cross entropy loss")
-plt.show()
+# plt.plot(range(N), loss_valid, color='b', label='validation')
+# plt.plot(range(N), loss_train, color='r', label='training')
+# plt.legend(loc='upper left')
+# plt.title("Learning curve for training and validation sets")
+# plt.xlabel("Number of iterations (N)")
+# plt.ylabel("Cross entropy loss")
+# plt.show()
 
-y_testpred = model_logreg(x_test).data.numpy()
+# y_testpred = model_logreg(x_test).data.numpy()
 
-# results on test set
-print('accuracy on testing set: ', np.mean(np.argmax(y_testpred, 1) == test_yLR))
+# # results on test set
+# print('accuracy on testing set: ', np.mean(np.argmax(y_testpred, 1) == test_yLR))
 
-# weights (fn) from word_i to 'fake' (z0)
-weight_f = model_logreg[0].weight[0,:]
+# # weights (fn) from word_i to 'fake' (z0)
+# weight_f = model_logreg[0].weight[0,:]
 
-# weights (rn) from word_i to 'real' (z1)
-weight_r = model_logreg[0].weight[1,:]
+# # weights (rn) from word_i to 'real' (z1)
+# weight_r = model_logreg[0].weight[1,:]
 
-# Part 8
+# # Part 8
 
-# top 10 presence predict real (realP)
-# for each word exp(weight_r) / exp(weight_r)+ exp(weight_f)
-changeDict = {}
+# # top 10 presence predict real (realP)
+# # for each word exp(weight_r) / exp(weight_r)+ exp(weight_f)
+# changeDict = {}
 
-for i in range(len(wordSet)):
-	changeDict[wordSet[i]] = exp(weight_r[i]) / (exp(weight_r[i]) + exp(weight_f[i]))
+# for i in range(len(wordSet)):
+# 	changeDict[wordSet[i]] = exp(weight_r[i]) / (exp(weight_r[i]) + exp(weight_f[i]))
 
-realP = sorted(changeDict, key=changeDict.get, reverse=True)[:10]
+# realP = sorted(changeDict, key=changeDict.get, reverse=True)[:10]
 
-for word in realP:
-	print('realP', word, changeDict[word])
+# for word in realP:
+# 	print('realP', word, changeDict[word])
 
-# top 10 absence predict real (realA)
-# for each word exp(-weight_r) / exp(-weight_r) + exp(-weight_f)
-changeDict1 = {}
+# # top 10 absence predict real (realA)
+# # for each word exp(-weight_r) / exp(-weight_r) + exp(-weight_f)
+# changeDict1 = {}
 
-for i in range(len(wordSet)):
-	changeDict1[wordSet[i]] = exp(-weight_r[i]) / (exp(-weight_r[i]) + exp(-weight_f[i]))
+# for i in range(len(wordSet)):
+# 	changeDict1[wordSet[i]] = exp(-weight_r[i]) / (exp(-weight_r[i]) + exp(-weight_f[i]))
 
-realA = sorted(changeDict1, key=changeDict1.get, reverse=True)[:10]
+# realA = sorted(changeDict1, key=changeDict1.get, reverse=True)[:10]
 
-for word in realA:
-	print('realA', word, changeDict1[word])
+# for word in realA:
+# 	print('realA', word, changeDict1[word])
 
 
 # # top 10 presence predict fake (fakeP)
